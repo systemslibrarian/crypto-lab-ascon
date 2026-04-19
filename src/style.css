@@ -45,6 +45,22 @@ body {
     linear-gradient(180deg, var(--bg), var(--bg-soft));
 }
 
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0.5rem;
+  background: #0b1f3f;
+  color: #ffffff;
+  border: 2px solid #ffffff;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  z-index: 1000;
+}
+
+.skip-link:focus {
+  left: 1rem;
+}
+
 #app {
   max-width: 1200px;
   margin: 0 auto;
@@ -153,6 +169,14 @@ button:hover {
   border-color: var(--rate);
 }
 
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--tag);
+  outline-offset: 2px;
+}
+
 .ghost {
   width: auto;
   max-width: 180px;
@@ -240,6 +264,12 @@ table {
   font-size: 0.88rem;
 }
 
+caption {
+  text-align: left;
+  margin-bottom: 0.5rem;
+  color: var(--muted);
+}
+
 th,
 td {
   border: 1px solid var(--border);
@@ -252,6 +282,28 @@ td {
   text-align: center;
   color: var(--muted);
   font-size: 0.92rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 @keyframes rise {
@@ -269,6 +321,16 @@ td {
 @media (max-width: 700px) {
   .grid2 {
     grid-template-columns: 1fr;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  th,
+  td {
+    min-width: 140px;
   }
 
   #app {

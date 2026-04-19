@@ -24,19 +24,20 @@ if (!app) {
 }
 
 app.innerHTML = `
+  <a class="skip-link" href="#main-content">Skip to main content</a>
   <header class="hero">
     <p class="eyebrow">NIST Lightweight AEAD Standard</p>
     <h1>crypto-lab-ascon</h1>
     <p class="subtitle">Permutation-based sponge cryptography for constrained devices.</p>
-    <button id="theme-toggle" class="ghost" type="button">Toggle Theme</button>
+    <button id="theme-toggle" class="ghost" type="button" aria-label="Toggle dark and light theme">Toggle Theme</button>
   </header>
 
-  <main class="layout">
+  <main id="main-content" class="layout">
     <section class="panel" id="exhibit-sponge">
       <h2>Exhibit 1: The Sponge Construction</h2>
       <p>State = 5 x 64-bit words. Top two words are rate/public. Bottom three words are capacity/secret.</p>
-      <div id="state-bars" class="state-bars"></div>
-      <pre id="state-hex" class="mono"></pre>
+      <div id="state-bars" class="state-bars" aria-label="Ascon five-word state bars"></div>
+      <pre id="state-hex" class="mono" aria-live="polite"></pre>
       <div class="controls">
         <button id="btn-init" type="button">Initialize with IV || K || N</button>
         <button id="btn-p12" type="button">Apply p12</button>
@@ -52,12 +53,14 @@ app.innerHTML = `
       <h2>Exhibit 2: AEAD Encryption Live Demo</h2>
       <div class="grid2">
         <label>Key (16-byte hex)
-          <input id="aead-key" type="text" />
+          <input id="aead-key" type="text" inputmode="text" spellcheck="false" autocomplete="off" aria-describedby="aead-key-help" />
         </label>
+        <span id="aead-key-help" class="sr-only">Enter exactly 32 hexadecimal characters for a 16-byte key.</span>
         <button id="gen-key" type="button">Generate Random Key</button>
         <label>Nonce (16-byte hex)
-          <input id="aead-nonce" type="text" />
+          <input id="aead-nonce" type="text" inputmode="text" spellcheck="false" autocomplete="off" aria-describedby="aead-nonce-help" />
         </label>
+        <span id="aead-nonce-help" class="sr-only">Enter exactly 32 hexadecimal characters for a 16-byte nonce.</span>
         <button id="gen-nonce" type="button">Generate Random Nonce</button>
       </div>
       <label>Associated Data
@@ -72,17 +75,19 @@ app.innerHTML = `
         <button id="btn-tamper" type="button">Tamper One Bit</button>
       </div>
       <label>Ciphertext (hex)
-        <textarea id="aead-ct" rows="3" readonly></textarea>
+        <textarea id="aead-ct" rows="3" readonly spellcheck="false"></textarea>
       </label>
       <label>Tag (16 bytes hex)
-        <input id="aead-tag" type="text" readonly />
+        <input id="aead-tag" type="text" readonly spellcheck="false" />
       </label>
-      <p id="aead-status" class="status"></p>
+      <p id="aead-status" class="status" role="status" aria-live="polite"></p>
     </section>
 
     <section class="panel" id="exhibit-compare">
       <h2>Exhibit 3: Ascon vs AES-GCM vs ChaCha20-Poly1305</h2>
+      <div class="table-wrap">
       <table>
+        <caption>Comparison of cryptographic properties for constrained-device use.</caption>
         <thead>
           <tr><th>Property</th><th>Ascon-AEAD128</th><th>AES-256-GCM</th><th>ChaCha20-Poly1305</th></tr>
         </thead>
@@ -96,6 +101,7 @@ app.innerHTML = `
           <tr><td>Target</td><td>IoT / embedded</td><td>General-purpose</td><td>General-purpose</td></tr>
         </tbody>
       </table>
+      </div>
     </section>
 
     <section class="panel" id="exhibit-hash">
@@ -110,7 +116,7 @@ app.innerHTML = `
       <label>Output (64 hex chars)
         <textarea id="hash-output" rows="2" readonly></textarea>
       </label>
-      <pre id="avalanche-out" class="mono"></pre>
+      <pre id="avalanche-out" class="mono" role="status" aria-live="polite"></pre>
     </section>
 
     <section class="panel" id="exhibit-iot">
@@ -169,6 +175,8 @@ function toWordHex(word: bigint): string {
 let spongeState: AsconState = [0n, 0n, 0n, 0n, 0n];
 const demoKey = randomBytes(16);
 const demoNonce = randomBytes(16);
+const demoK0 = load64(demoKey, 0);
+const demoK1 = load64(demoKey, 8);
 const demoAD = utf8ToBytes('demo-associated-data').subarray(0, 16);
 const demoPT = utf8ToBytes('demo-plaintext-data').subarray(0, 16);
 
@@ -202,7 +210,7 @@ function absorbSingleRateBlock(state: AsconState, block: Uint8Array): AsconState
 }
 
 function initializeSponge(): void {
-  spongeState = [IV_AEAD, load64(demoKey, 0), load64(demoKey, 8), load64(demoNonce, 0), load64(demoNonce, 8)];
+  spongeState = [IV_AEAD, demoK0, demoK1, load64(demoNonce, 0), load64(demoNonce, 8)];
   renderState('Initialized with IV || K || N');
 }
 
@@ -242,9 +250,17 @@ byId<HTMLButtonElement>('btn-absorb-pt').addEventListener('click', () => {
 });
 
 byId<HTMLButtonElement>('btn-finalize').addEventListener('click', () => {
+  spongeState = [spongeState[0], spongeState[1], spongeState[2] ^ demoK0, spongeState[3] ^ demoK1, spongeState[4]];
   spongeState = p12(spongeState);
-  const tag = stateRateToBytes([spongeState[3], spongeState[4], 0n, 0n, 0n]);
-  renderState(`Finalized and extracted demo tag fragment ${bytesToHex(tag)}`);
+  const tagState: AsconState = [
+    spongeState[0],
+    spongeState[1],
+    spongeState[2],
+    spongeState[3] ^ demoK0,
+    spongeState[4] ^ demoK1,
+  ];
+  const tag = stateRateToBytes([tagState[3], tagState[4], 0n, 0n, 0n]);
+  renderState(`Finalize: XOR K, p12, extract tag ${bytesToHex(tag)}`);
 });
 
 const aeadKeyInput = byId<HTMLInputElement>('aead-key');
@@ -349,6 +365,7 @@ const themeToggle = byId<HTMLButtonElement>('theme-toggle');
 function applyTheme(mode: 'dark' | 'light'): void {
   document.documentElement.setAttribute('data-theme', mode);
   localStorage.setItem('theme', mode);
+  themeToggle.setAttribute('aria-pressed', mode === 'dark' ? 'true' : 'false');
 }
 
 themeToggle.addEventListener('click', () => {
@@ -356,4 +373,5 @@ themeToggle.addEventListener('click', () => {
   applyTheme(current === 'light' ? 'dark' : 'light');
 });
 
+applyTheme(document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark');
 renderState('Ready. Click initialize to begin.');
