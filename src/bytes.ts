@@ -90,6 +90,20 @@ export function secureRandomInt(maxExclusive: number): number {
   return buf[0] % maxExclusive;
 }
 
+/**
+ * Number of set bits (Hamming weight) in the low 64 bits of a word.
+ * Used to show how the permutation diffuses the state toward ~50% density.
+ */
+export function popcount64(x: bigint): number {
+  let v = x & MASK64;
+  let count = 0;
+  while (v !== 0n) {
+    count += Number(v & 1n);
+    v >>= 1n;
+  }
+  return count;
+}
+
 export function hammingDistance(a: Uint8Array, b: Uint8Array): number {
   if (a.length !== b.length) {
     throw new Error('Hamming distance requires equal-length inputs');

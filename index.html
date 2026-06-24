@@ -4,11 +4,27 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Interactive, dependency-free demo of Ascon — the NIST Lightweight Cryptography standard (FIPS SP 800-232). Watch the 320-bit sponge diffuse, run real Ascon-AEAD128 authenticated encryption, and hash with Ascon-Hash256. Verified against the official NIST KAT vectors."
+    />
+    <meta name="author" content="systemslibrarian" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#05070d" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#eef6ff" media="(prefers-color-scheme: light)" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Ascon — NIST Lightweight Cryptography, in the browser" />
+    <meta
+      property="og:description"
+      content="Watch the 320-bit sponge diffuse, run real Ascon-AEAD128 authenticated encryption, and hash with Ascon-Hash256 — verified against the official NIST KAT vectors."
+    />
+    <meta property="og:url" content="https://systemslibrarian.github.io/crypto-lab-ascon/" />
+    <meta name="twitter:card" content="summary" />
     <script>
       const saved = localStorage.getItem('theme');
       document.documentElement.setAttribute('data-theme', saved ?? 'dark');
     </script>
-    <title>crypto-lab-ascon</title>
+    <title>Ascon — NIST Lightweight Cryptography Demo</title>
   </head>
   <body>
 <!-- BEGIN crypto-lab shared header — managed; edit shared-header.html + re-run reapply-header.py

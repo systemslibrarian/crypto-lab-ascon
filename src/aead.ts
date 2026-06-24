@@ -35,8 +35,12 @@ function validateInputSizes(key: Uint8Array, nonce: Uint8Array): void {
 
 /**
  * Initialize state: IV || K || N, then apply p12, then XOR K into capacity.
+ *
+ * Exported so the interactive walkthrough (Exhibit 1) can drive the exact same
+ * code path the production `asconEncrypt` uses — the on-screen trace is the real
+ * algorithm, not a re-implementation. See `proveWalkthroughMatches` in main.ts.
  */
-function initialize(key: Uint8Array, nonce: Uint8Array): AsconState {
+export function initialize(key: Uint8Array, nonce: Uint8Array): AsconState {
   validateInputSizes(key, nonce);
   const k0 = load64(key, 0);
   const k1 = load64(key, 8);
@@ -58,7 +62,7 @@ function xorAndPadRate(state: AsconState, chunk: Uint8Array): AsconState {
 /**
  * Absorb associated data (domain separation via XOR into x4 at end).
  */
-function absorbAD(state: AsconState, ad: Uint8Array): AsconState {
+export function absorbAD(state: AsconState, ad: Uint8Array): AsconState {
   if (ad.length === 0) {
     return [state[0], state[1], state[2], state[3], state[4] ^ 0x8000000000000000n];
   }
@@ -81,7 +85,7 @@ function absorbAD(state: AsconState, ad: Uint8Array): AsconState {
 /**
  * Encrypt plaintext and return ciphertext + updated state.
  */
-function encryptPlaintext(state: AsconState, pt: Uint8Array): {
+export function encryptPlaintext(state: AsconState, pt: Uint8Array): {
   state: AsconState;
   ciphertext: Uint8Array;
 } {
@@ -113,7 +117,7 @@ function encryptPlaintext(state: AsconState, pt: Uint8Array): {
 /**
  * Finalize: XOR K into capacity, apply p12, extract tag from x3||x4.
  */
-function finalize(state: AsconState, key: Uint8Array): {
+export function finalize(state: AsconState, key: Uint8Array): {
   state: AsconState;
   tag: Uint8Array;
 } {
