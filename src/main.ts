@@ -193,6 +193,7 @@ Ascon-AEAD128:
   </main>
 
   <footer class="footer">
+    <p class="footer-links">Related demos: <a href="https://systemslibrarian.github.io/crypto-lab-aes-modes/" target="_blank" rel="noopener noreferrer">AES modes and AEAD for comparison with lightweight crypto</a> · <a href="https://systemslibrarian.github.io/crypto-lab-aegis-gate/" target="_blank" rel="noopener noreferrer">high-performance AES-based AEAD</a> · <a href="https://systemslibrarian.github.io/crypto-lab-chacha20-stream/" target="_blank" rel="noopener noreferrer">ARX stream cipher used in lightweight contexts</a> · <a href="https://systemslibrarian.github.io/crypto-lab-babel-hash/" target="_blank" rel="noopener noreferrer">modern hash functions including sponge-based SHA3</a> · <a href="https://systemslibrarian.github.io/crypto-lab-hash-zoo/" target="_blank" rel="noopener noreferrer">hash constructions including Merkle-Damgård and sponge</a></p>
     <p>"Whether therefore ye eat, or drink, or whatsoever ye do, do all to the glory of God."</p>
     <p>1 Corinthians 10:31</p>
   </footer>
