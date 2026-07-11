@@ -538,3 +538,166 @@ td {
     padding: 1rem 0.75rem 2rem;
   }
 }
+
+/* --- Flip highlighting: bits touched by the latest permutation step. ---
+   Placed after the word-N .on rules so a flipped bit reads gold whether it
+   landed on or off — same visual language as the avalanche legend. */
+.bit.flip {
+  background: var(--tag);
+  box-shadow: 0 0 3px rgba(255, 215, 0, 0.7);
+}
+
+/* Column highlight: the 5 vertically-aligned bits feeding one S-box. */
+.bit.col-hl {
+  outline: 2px solid var(--tag);
+  outline-offset: 0;
+}
+
+/* --- S-box microscope widget --- */
+.sbox-widget {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0.6rem 0 0.3rem;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.sbox-col-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-top: 0.1rem;
+}
+
+.sbox-col-head em {
+  display: grid;
+  place-items: center;
+  height: 2.2rem;
+  font-style: normal;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.sbox-col-head em:nth-child(2) {
+  height: 0.9rem;
+}
+
+.sbox-lane {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.sbox-toggle {
+  width: 2.2rem;
+  height: 2.2rem;
+  padding: 0;
+  font-weight: 700;
+}
+
+.sbox-toggle.lit {
+  background: var(--rate);
+  border-color: var(--rate);
+  color: #05070d;
+}
+
+.sbox-lane-label {
+  font-size: 0.7rem;
+  height: 0.9rem;
+  color: var(--muted);
+}
+
+.sbox-lamp {
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(8, 18, 33, 0.45);
+  color: var(--muted);
+}
+
+:root[data-theme='light'] .sbox-lamp {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.sbox-lamp.lit {
+  background: var(--capacity);
+  border-color: var(--capacity);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+:root[data-theme='light'] .sbox-lamp.lit {
+  color: #ffffff;
+}
+
+.sbox-values {
+  flex-basis: 100%;
+  font-size: 0.8rem;
+  color: var(--text);
+}
+
+input[type='range'] {
+  accent-color: var(--rate);
+  padding: 0;
+}
+
+input[type='radio'] {
+  width: auto;
+  accent-color: var(--rate);
+}
+
+/* --- Self-check quiz --- */
+.quiz-item {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin: 0.7rem 0;
+  padding: 0.5rem 0.8rem 0.6rem;
+}
+
+.quiz-item legend {
+  font-weight: 600;
+  color: var(--text);
+  padding: 0 0.3rem;
+}
+
+.quiz-option {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0.35rem 0;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.quiz-feedback {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+}
+
+.quiz-feedback.good {
+  color: var(--ok);
+}
+
+.quiz-feedback.bad {
+  color: var(--bad);
+}
+
+/* Later panels keep the entrance stagger going. */
+.panel:nth-child(6) {
+  animation-delay: 0.4s;
+}
+
+.panel:nth-child(7) {
+  animation-delay: 0.44s;
+}
+
+.panel:nth-child(n + 8) {
+  animation-delay: 0.48s;
+}

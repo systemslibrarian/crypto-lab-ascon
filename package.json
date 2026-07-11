@@ -8,9 +8,13 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:a11y": "playwright test",
+    "og-image": "node scripts/generate-og-image.mjs"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
+    "@playwright/test": "^1.61.1",
     "typescript": "~6.0.2",
     "vite": "^8.0.4",
     "vitest": "^4.1.4"

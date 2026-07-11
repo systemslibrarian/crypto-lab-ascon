@@ -13,28 +13,46 @@ import {
   bytesToUtf8,
   hexToBytes,
   hammingDistance,
-  popcount64,
   randomBytes,
   secureRandomInt,
   utf8ToBytes,
 } from './bytes';
 import { asconHash256 } from './hash';
-import { p12, round, ROUND_CONSTANTS, type AsconState } from './permutation';
+import {
+  addConstant,
+  diffusion,
+  p12,
+  round,
+  ROUND_CONSTANTS,
+  sbox,
+  type AsconState,
+} from './permutation';
+import { renderBitGrid } from './ui/bitgrid';
+import * as benchExhibit from './ui/benchmark';
+import * as diffusionExhibit from './ui/diffusion';
+import * as nonceExhibit from './ui/noncereuse';
+import * as quizExhibit from './ui/quiz';
+import * as sboxScope from './ui/sboxscope';
+import { applyParamsFromUrl, buildShareUrl } from './ui/share';
+import * as xofExhibit from './ui/xofexhibit';
 
 const app = document.querySelector<HTMLDivElement>('#app');
 if (!app) {
   throw new Error('Missing #app container');
 }
 
+const reducedMotion = (): boolean => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 app.innerHTML = `
   <a class="skip-link" href="#main-content">Skip to main content</a>
   <div class="hero">
     <p class="eyebrow">NIST Lightweight Cryptography · FIPS SP 800-232</p>
     <h1>Ascon</h1>
-    <p class="subtitle">Permutation-based sponge AEAD &amp; hashing for constrained devices — built from the spec, with zero crypto dependencies.</p>
+    <p class="subtitle">Permutation-based sponge AEAD, hashing &amp; XOF for constrained devices — built from the spec, with zero crypto dependencies.</p>
     <ul class="badges" aria-label="At a glance">
       <li>320-bit state</li>
       <li>128-bit key &amp; tag</li>
+      <li>AEAD · Hash · XOF</li>
       <li class="badge-ok">Verified against official NIST KATs</li>
     </ul>
     <button id="theme-toggle" class="ghost" type="button" aria-label="Toggle dark and light theme">Toggle Theme</button>
@@ -43,7 +61,7 @@ app.innerHTML = `
   <main id="main-content" class="layout">
     <section class="panel" id="exhibit-sponge">
       <h2><span class="ex-num" aria-hidden="true">1</span> The Sponge Construction</h2>
-      <p>State = 5 x 64-bit words (320 bits). Words <strong>x0–x1</strong> are the rate (public); <strong>x2–x4</strong> are the capacity (secret). Each square below is one real bit of the live state — watch the permutation scramble it toward ~50% density (diffusion).</p>
+      <p>State = 5 x 64-bit words (320 bits). Words <strong>x0–x1</strong> are the rate (public); <strong>x2–x4</strong> are the capacity (secret). Each square below is one real bit of the live state — watch the permutation scramble it toward ~50% density (diffusion). Bits changed by the latest step flash gold.</p>
       <div id="state-bars" class="state-bars" aria-hidden="true"></div>
       <p id="state-density" class="density"></p>
       <pre id="state-hex" class="mono" aria-live="polite" aria-label="Ascon state words in hexadecimal"></pre>
@@ -52,9 +70,10 @@ app.innerHTML = `
       <div class="controls">
         <button id="btn-p12" type="button">Apply p12</button>
         <button id="btn-step" type="button">Step through p12 (round by round)</button>
+        <button id="btn-layer" type="button">Step one layer (constant → S-box → diffusion)</button>
       </div>
 
-      <p class="phase-label">Walk the real AEAD pipeline <span class="tagline">— same functions as Exhibit 2</span></p>
+      <p class="phase-label">Walk the real AEAD pipeline <span class="tagline">— same functions as Exhibit 3</span></p>
       <div class="controls">
         <button id="btn-init" type="button">1 · Initialize</button>
         <button id="btn-absorb-ad" type="button">2 · Absorb AD</button>
@@ -67,7 +86,7 @@ app.innerHTML = `
 
       <details class="explainer">
         <summary>How one round of the permutation works</summary>
-        <p>Each round transforms the 320-bit state in three steps:</p>
+        <p>Each round transforms the 320-bit state in three steps (use the <em>Step one layer</em> button above to watch each one flip bits individually):</p>
         <ol>
           <li><strong>Add round constant</strong> — XOR a per-round constant into word x2, so the 12 (or 8) rounds are not identical.</li>
           <li><strong>Substitution layer</strong> — a 5-bit S-box applied in parallel to all 64 bit-columns (one bit from each of x0…x4). It is <em>bitsliced</em> with AND/XOR/NOT only — no lookup tables — which is why Ascon is naturally constant-time.</li>
@@ -80,10 +99,14 @@ x3 ^= (x3 &gt;&gt;&gt; 10) ^ (x3 &gt;&gt;&gt; 17)
 x4 ^= (x4 &gt;&gt;&gt;  7) ^ (x4 &gt;&gt;&gt; 41)</pre>
         <p><code>p12</code> runs 12 rounds (initialization &amp; finalization); the data phase uses 8. The AD and message phases are kept apart by <em>domain separation</em> — a single bit is flipped (XOR <code>0x80…00</code> into x4) between them so the two can never be confused.</p>
       </details>
+
+      ${sboxScope.fragmentHtml()}
     </section>
 
+    ${diffusionExhibit.sectionHtml(2)}
+
     <section class="panel" id="exhibit-aead">
-      <h2><span class="ex-num" aria-hidden="true">2</span> AEAD Encryption — Live</h2>
+      <h2><span class="ex-num" aria-hidden="true">3</span> AEAD Encryption — Live</h2>
       <div class="grid2">
         <label>Key (16-byte hex)
           <input id="aead-key" type="text" inputmode="text" spellcheck="false" autocomplete="off" aria-describedby="aead-key-help" />
@@ -116,33 +139,16 @@ x4 ^= (x4 &gt;&gt;&gt;  7) ^ (x4 &gt;&gt;&gt; 41)</pre>
       <div class="controls">
         <button id="copy-ct" class="copy-btn" type="button">Copy ciphertext</button>
         <button id="copy-tag" class="copy-btn" type="button">Copy tag</button>
+        <button id="copy-link" class="copy-btn" type="button">Copy lesson link</button>
       </div>
       <p id="aead-status" class="status" role="status" aria-live="polite"></p>
+      <p class="legend">The lesson link freezes these inputs (and the hash input) into a URL you can hand to a class. Never put real keys in URLs — these are classroom values.</p>
     </section>
 
-    <section class="panel" id="exhibit-compare">
-      <h2><span class="ex-num" aria-hidden="true">3</span> Ascon vs AES-GCM vs ChaCha20-Poly1305</h2>
-      <div class="table-wrap">
-      <table>
-        <caption>Comparison of cryptographic properties for constrained-device use.</caption>
-        <thead>
-          <tr><th>Property</th><th>Ascon-AEAD128</th><th>AES-256-GCM</th><th>ChaCha20-Poly1305</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Key size</td><td>128 bits</td><td>256 bits</td><td>256 bits</td></tr>
-          <tr><td>State size</td><td>320 bits</td><td>~2200 bits (128-bit block + 1920-bit key schedule + GHASH)</td><td>512 bits</td></tr>
-          <tr><td>Code size</td><td><strong>Smallest</strong></td><td>Medium</td><td>Small</td></tr>
-          <tr><td>Hardware deps</td><td>None</td><td>AES-NI for speed</td><td>None</td></tr>
-          <tr><td>Side-channel</td><td><strong>Strong</strong> (constant-time natural)</td><td>Needs AES-NI or masking</td><td>Strong</td></tr>
-          <tr><td>NIST standard</td><td>FIPS SP 800-232</td><td>FIPS 197 + 800-38D</td><td>RFC 8439</td></tr>
-          <tr><td>Target</td><td>IoT / embedded</td><td>General-purpose</td><td>General-purpose</td></tr>
-        </tbody>
-      </table>
-      </div>
-    </section>
+    ${nonceExhibit.sectionHtml(4)}
 
     <section class="panel" id="exhibit-hash">
-      <h2><span class="ex-num" aria-hidden="true">4</span> Ascon-Hash256</h2>
+      <h2><span class="ex-num" aria-hidden="true">5</span> Ascon-Hash256</h2>
       <label>Input Text
         <input id="hash-input" type="text" value="Hello" />
       </label>
@@ -165,8 +171,31 @@ x4 ^= (x4 &gt;&gt;&gt;  7) ^ (x4 &gt;&gt;&gt; 41)</pre>
       </p>
     </section>
 
+    ${xofExhibit.sectionHtml(6)}
+
+    <section class="panel" id="exhibit-compare">
+      <h2><span class="ex-num" aria-hidden="true">7</span> Ascon vs AES-GCM vs ChaCha20-Poly1305</h2>
+      <div class="table-wrap">
+      <table>
+        <caption>Comparison of cryptographic properties for constrained-device use.</caption>
+        <thead>
+          <tr><th>Property</th><th>Ascon-AEAD128</th><th>AES-256-GCM</th><th>ChaCha20-Poly1305</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Key size</td><td>128 bits</td><td>256 bits</td><td>256 bits</td></tr>
+          <tr><td>State size</td><td>320 bits</td><td>~2200 bits (128-bit block + 1920-bit key schedule + GHASH)</td><td>512 bits</td></tr>
+          <tr><td>Code size</td><td><strong>Smallest</strong></td><td>Medium</td><td>Small</td></tr>
+          <tr><td>Hardware deps</td><td>None</td><td>AES-NI for speed</td><td>None</td></tr>
+          <tr><td>Side-channel</td><td><strong>Strong</strong> (constant-time natural)</td><td>Needs AES-NI or masking</td><td>Strong</td></tr>
+          <tr><td>NIST standard</td><td>FIPS SP 800-232</td><td>FIPS 197 + 800-38D</td><td>RFC 8439</td></tr>
+          <tr><td>Target</td><td>IoT / embedded</td><td>General-purpose</td><td>General-purpose</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </section>
+
     <section class="panel" id="exhibit-iot">
-      <h2><span class="ex-num" aria-hidden="true">5</span> Why Ascon for IoT?</h2>
+      <h2><span class="ex-num" aria-hidden="true">8</span> Why Ascon for IoT?</h2>
       <pre class="mono codeblock">SCENARIO: Smart water meter, 8-bit MCU, 2KB RAM, battery-powered.
 
 AES-256-GCM:
@@ -190,6 +219,10 @@ Ascon-AEAD128:
         <li>Embedded firmware update signing via Ascon-Hash256</li>
       </ul>
     </section>
+
+    ${benchExhibit.sectionHtml(9)}
+
+    ${quizExhibit.sectionHtml(10)}
   </main>
 
   <footer class="footer">
@@ -231,32 +264,54 @@ const bars = byId<HTMLDivElement>('state-bars');
 const density = byId<HTMLParagraphElement>('state-density');
 const spongeVerify = byId<HTMLParagraphElement>('sponge-verify');
 
+let scopeHooks: sboxScope.SboxScopeHooks | null = null;
+let prevRendered: AsconState | null = null;
+
 function renderState(label: string): void {
   trace.textContent = `${trace.textContent ?? ''}${label}\n`;
   stateHex.textContent = spongeState
     .map((w, i) => `x${i}: ${toWordHex(w)}`)
     .join('\n');
 
-  // Render the actual 320 bits of state. Each square is one real bit, so the
-  // S-box and linear layer visibly scramble the state toward ~50% density.
-  let totalSet = 0;
-  let html = '';
-  for (let i = 0; i < 5; i += 1) {
-    const w = spongeState[i];
-    const set = popcount64(w);
-    totalSet += set;
-    let cells = '';
-    for (let b = 63; b >= 0; b -= 1) {
-      const on = ((w >> BigInt(b)) & 1n) === 1n;
-      cells += `<i class="bit${on ? ' on' : ''}"></i>`;
-    }
-    const role = i < 2 ? 'rate' : 'capacity';
-    html += `<div class="word word-${i}"><span class="word-label">x${i} <em>${role}</em> · ${set}/64 set</span><div class="bitgrid">${cells}</div></div>`;
-  }
-  bars.innerHTML = html;
+  // Render the actual 320 bits of state. Each square is one real bit, and
+  // bits touched by the latest step carry a `flip` marker, so the S-box and
+  // linear layer visibly scramble the state toward ~50% density.
+  const stats = renderBitGrid(bars, spongeState, prevRendered);
+  prevRendered = spongeState;
+  scopeHooks?.afterGridRender();
 
-  const percent = ((totalSet / 320) * 100).toFixed(1);
-  density.textContent = `State density: ${totalSet} / 320 bits set (${percent}%) — well-diffused state sits near 50%.`;
+  const percent = ((stats.setBits / 320) * 100).toFixed(1);
+  const flippedNote = stats.flipped > 0 ? ` · ${stats.flipped} bits flipped by this step` : '';
+  density.textContent = `State density: ${stats.setBits} / 320 bits set (${percent}%)${flippedNote} — well-diffused state sits near 50%.`;
+}
+
+// ---------------------------------------------------------------------------
+// Walkthrough stage machine. The four pipeline buttons only make sense in
+// order; an out-of-order click gets a teaching hint instead of silently
+// producing a state that no longer matches the algorithm.
+// ---------------------------------------------------------------------------
+type Stage = 'fresh' | 'initialized' | 'ad-absorbed' | 'encrypted' | 'finalized';
+let stage: Stage = 'fresh';
+
+function hint(message: string): void {
+  spongeVerify.textContent = message;
+  spongeVerify.className = 'status neutral';
+}
+
+function clearHint(): void {
+  spongeVerify.textContent = '';
+  spongeVerify.className = 'status';
+}
+
+/**
+ * Manually stepping the permutation mid-walkthrough desynchronizes the state
+ * from the AEAD pipeline. Allowed — inspecting is the point — but say so.
+ */
+function markOffScript(): void {
+  if (stage !== 'fresh') {
+    stage = 'fresh';
+    hint('You stepped the permutation by hand, so the AEAD walkthrough is now off-script. Click 1 · Initialize to restart it.');
+  }
 }
 
 // The step-through animation runs on an interval. Track it so a second click —
@@ -264,6 +319,17 @@ function renderState(label: string): void {
 // state concurrently. `stepBtn` is disabled while an animation is in flight.
 let stepTimer: number | null = null;
 const stepBtn = byId<HTMLButtonElement>('btn-step');
+
+// Round/layer counters for the two manual stepping modes.
+let manualRound = 0;
+let layerRound = 0;
+let layerPhase = 0; // 0 = add constant next, 1 = S-box next, 2 = diffusion next
+
+function resetStepCounters(): void {
+  manualRound = 0;
+  layerRound = 0;
+  layerPhase = 0;
+}
 
 function stopStepping(): void {
   if (stepTimer !== null) {
@@ -275,21 +341,34 @@ function stopStepping(): void {
 
 byId<HTMLButtonElement>('btn-init').addEventListener('click', () => {
   stopStepping();
+  resetStepCounters();
   trace.textContent = '';
-  spongeVerify.textContent = '';
-  spongeVerify.className = 'status';
+  clearHint();
+  prevRendered = null;
   spongeState = initialize(demoKey, demoNonce);
+  stage = 'initialized';
   renderState('1 · initialize(): state = p12(IV ‖ K ‖ N), then K XORed into the capacity');
 });
 
 byId<HTMLButtonElement>('btn-p12').addEventListener('click', () => {
   stopStepping();
+  resetStepCounters();
   spongeState = p12(spongeState);
   renderState('Applied p12 (12 rounds)');
+  markOffScript();
 });
 
 stepBtn.addEventListener('click', () => {
   stopStepping();
+  if (reducedMotion()) {
+    // No auto-advancing animation for reduced-motion users: each click steps
+    // exactly one round, same math, no timer.
+    spongeState = round(spongeState, ROUND_CONSTANTS[manualRound]);
+    renderState(`Round ${manualRound + 1}/12 — add constant 0x${ROUND_CONSTANTS[manualRound].toString(16)}, S-box, linear diffusion`);
+    manualRound = (manualRound + 1) % 12;
+    markOffScript();
+    return;
+  }
   let index = 0;
   stepBtn.disabled = true;
   stepTimer = window.setInterval(() => {
@@ -300,25 +379,78 @@ stepBtn.addEventListener('click', () => {
       stopStepping();
     }
   }, 300);
+  markOffScript();
+});
+
+byId<HTMLButtonElement>('btn-layer').addEventListener('click', () => {
+  stopStepping();
+  const c = ROUND_CONSTANTS[layerRound];
+  if (layerPhase === 0) {
+    spongeState = addConstant(spongeState, c);
+    renderState(`Round ${layerRound + 1}/12 · layer 1/3 — add constant 0x${c.toString(16)}: XORs into x2 only (watch how few bits flip)`);
+  } else if (layerPhase === 1) {
+    spongeState = sbox(spongeState);
+    renderState(`Round ${layerRound + 1}/12 · layer 2/3 — S-box: every one of the 64 bit-columns through the 5-bit S-box at once`);
+  } else {
+    spongeState = diffusion(spongeState);
+    renderState(`Round ${layerRound + 1}/12 · layer 3/3 — linear diffusion: each word XORed with two rotations of itself`);
+    layerRound = (layerRound + 1) % 12;
+  }
+  layerPhase = (layerPhase + 1) % 3;
+  markOffScript();
 });
 
 byId<HTMLButtonElement>('btn-absorb-ad').addEventListener('click', () => {
   stopStepping();
+  if (stage !== 'initialized') {
+    hint(
+      stage === 'fresh'
+        ? 'Not yet — the sponge must be keyed first. Click 1 · Initialize, which runs p12 over IV ‖ K ‖ N.'
+        : stage === 'ad-absorbed'
+          ? 'The AD is already absorbed and domain-separated. Next: 3 · Encrypt PT → CT.'
+          : 'This run has moved past the AD phase. Click 1 · Initialize to start a fresh walkthrough.',
+    );
+    return;
+  }
+  clearHint();
   spongeState = absorbAD(spongeState, demoAD);
+  stage = 'ad-absorbed';
   renderState(`2 · absorbAD(): XOR "${bytesToUtf8(demoAD)}" into the rate, p8, then domain-separate (flip 1 bit of x4)`);
 });
 
 byId<HTMLButtonElement>('btn-absorb-pt').addEventListener('click', () => {
   stopStepping();
+  if (stage !== 'ad-absorbed') {
+    hint(
+      stage === 'fresh' || stage === 'initialized'
+        ? 'Not yet — associated data comes before plaintext. Run 1 · Initialize, then 2 · Absorb AD.'
+        : stage === 'encrypted'
+          ? 'The plaintext is already encrypted. Next: 4 · Finalize → tag.'
+          : 'This run is finalized. Click 1 · Initialize to start a fresh walkthrough.',
+    );
+    return;
+  }
+  clearHint();
   const result = encryptPlaintext(spongeState, demoPT);
   spongeState = result.state;
+  stage = 'encrypted';
   renderState(`3 · encryptPlaintext("${bytesToUtf8(demoPT)}"): CT = ${bytesToHex(result.ciphertext)}`);
 });
 
 byId<HTMLButtonElement>('btn-finalize').addEventListener('click', () => {
   stopStepping();
+  if (stage !== 'encrypted') {
+    hint(
+      stage === 'finalized'
+        ? 'Already finalized — the tag is in the trace above. Click 1 · Initialize to run it again.'
+        : 'Not yet — finalization computes the tag over everything that came before. Run steps 1, 2 and 3 first.',
+    );
+    return;
+  }
+  clearHint();
   const result = finalize(spongeState, demoKey);
   spongeState = result.state;
+  stage = 'finalized';
   renderState(`4 · finalize(): XOR K into capacity, p12, extract tag = ${bytesToHex(result.tag)}`);
 });
 
@@ -493,6 +625,43 @@ byId<HTMLButtonElement>('btn-avalanche').addEventListener('click', () => {
     `Input 2: ${JSON.stringify(second)} (one bit flipped)\n` +
     `Hamming distance: ${distance} / 256 bits (${percent}%) — a single input bit cascades into ~half the digest.`;
   renderAvalancheGrid(h1, h2);
+});
+
+// ---------------------------------------------------------------------------
+// New exhibits and cross-cutting features.
+// ---------------------------------------------------------------------------
+
+scopeHooks = sboxScope.wire(byId, bars, () => spongeState);
+diffusionExhibit.wire(byId, reducedMotion);
+nonceExhibit.wire(byId);
+xofExhibit.wire(byId, wireCopy);
+benchExhibit.wire(byId);
+quizExhibit.wire(byId);
+
+// Shareable lesson links: restore ?key=&nonce=&ad=&pt=&msg= on load, and let
+// the AEAD panel mint a link that freezes the current scenario.
+const shareRefs = {
+  key: aeadKeyInput,
+  nonce: aeadNonceInput,
+  ad: aeadADInput,
+  pt: aeadPTInput,
+  hashMsg: hashInput,
+};
+if (applyParamsFromUrl(shareRefs)) {
+  aeadStatus.textContent = 'Loaded shared lesson scenario from the link.';
+  aeadStatus.className = 'status neutral';
+}
+byId<HTMLButtonElement>('copy-link').addEventListener('click', () => {
+  void navigator.clipboard
+    .writeText(buildShareUrl(shareRefs))
+    .then(() => {
+      aeadStatus.textContent = 'Lesson link copied — it reproduces these exact inputs.';
+      aeadStatus.className = 'status good';
+    })
+    .catch(() => {
+      aeadStatus.textContent = 'Could not copy the link (clipboard blocked).';
+      aeadStatus.className = 'status bad';
+    });
 });
 
 const themeToggle = byId<HTMLButtonElement>('theme-toggle');

@@ -72,7 +72,7 @@ export function bytesToUtf8(bytes: Uint8Array): string {
   return new TextDecoder().decode(bytes);
 }
 
-export function randomBytes(length: number): Uint8Array {
+export function randomBytes(length: number): Uint8Array<ArrayBuffer> {
   const out = new Uint8Array(length);
   crypto.getRandomValues(out);
   return out;
