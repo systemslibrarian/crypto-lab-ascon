@@ -86,28 +86,22 @@ a {
   padding: 2rem 1rem 3rem;
 }
 
-.hero {
-  text-align: center;
-  margin-bottom: 1.75rem;
-  animation: rise 0.7s ease-out both;
-}
+/* BEGIN cl-hero standard — managed, keep in sync across fleet */
+/* Accent/tint/text colors map to this demo's theme vars: --text-dim -> --muted,
+   --accent -> --link (both AA in dark and light). */
+.cl-hero{display:flex;align-items:flex-start;justify-content:space-between;gap:clamp(1rem,4vw,3rem);flex-wrap:wrap;margin:clamp(1rem,3vw,2rem) 0 1.5rem;}
+.cl-hero-main{flex:1 1 22rem;min-width:min(100%,20rem);}
+.cl-hero-title{margin:0;font-size:clamp(1.6rem,3.8vw,2.7rem);font-weight:700;line-height:1.1;letter-spacing:.01em;}
+.cl-hero-sub{margin:.4rem 0 0;font-size:clamp(.9rem,1.6vw,1.05rem);letter-spacing:.01em;opacity:.85;}
+.cl-hero-desc{margin:.55rem 0 0;font-size:1rem;line-height:1.5;color:var(--muted);max-width:60ch;}
+.cl-hero-why{flex:0 1 min(40%,26rem);min-width:min(100%,15rem);border:1px solid var(--border);border-radius:10px;padding:.85rem 1.05rem;background:color-mix(in oklab,var(--link) 6%,transparent);}
+.cl-hero-why-label{display:block;font-size:.68rem;font-weight:700;letter-spacing:.14em;}
+.cl-hero-why-text{margin:.35rem 0 0;font-size:.95rem;line-height:1.5;}
+@media (max-width:640px){.cl-hero{flex-direction:column;}.cl-hero-why{flex-basis:auto;width:100%;}}
+/* END cl-hero standard */
 
-.eyebrow {
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  font-size: 0.74rem;
-  color: var(--muted);
-}
-
-h1 {
-  margin: 0.2rem 0;
-  font-size: clamp(2rem, 5.5vw, 3.3rem);
-}
-
-.subtitle {
-  margin: 0 0 1rem;
-  color: var(--muted);
-}
+.cl-hero-main .badges{justify-content:flex-start;margin:1rem 0 0;}
+.cl-hero-main .ghost{margin-top:1rem;}
 
 .layout {
   display: grid;

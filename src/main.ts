@@ -45,18 +45,24 @@ const reducedMotion = (): boolean => window.matchMedia('(prefers-reduced-motion:
 
 app.innerHTML = `
   <a class="skip-link" href="#main-content">Skip to main content</a>
-  <div class="hero">
-    <p class="eyebrow">NIST Lightweight Cryptography · FIPS SP 800-232</p>
-    <h1>Ascon</h1>
-    <p class="subtitle">Permutation-based sponge AEAD, hashing &amp; XOF for constrained devices — built from the spec, with zero crypto dependencies.</p>
-    <ul class="badges" aria-label="At a glance">
-      <li>320-bit state</li>
-      <li>128-bit key &amp; tag</li>
-      <li>AEAD · Hash · XOF</li>
-      <li class="badge-ok">Verified against official NIST KATs</li>
-    </ul>
-    <button id="theme-toggle" class="ghost" type="button" aria-label="Toggle dark and light theme">Toggle Theme</button>
-  </div>
+  <header class="cl-hero">
+    <div class="cl-hero-main">
+      <h1 class="cl-hero-title">Ascon</h1>
+      <p class="cl-hero-sub">NIST Lightweight Cryptography · FIPS SP 800-232</p>
+      <p class="cl-hero-desc">Watch the 320-bit permutation diffuse, then run real Ascon-AEAD128 encryption, Ascon-Hash256, and the XOF — all built from the spec and verified against the official NIST KAT vectors.</p>
+      <ul class="badges" aria-label="At a glance">
+        <li>320-bit state</li>
+        <li>128-bit key &amp; tag</li>
+        <li>AEAD · Hash · XOF</li>
+        <li class="badge-ok">Verified against official NIST KATs</li>
+      </ul>
+      <button id="theme-toggle" class="ghost" type="button" aria-label="Toggle dark and light theme">Toggle Theme</button>
+    </div>
+    <aside class="cl-hero-why" aria-label="Why it matters">
+      <span class="cl-hero-why-label">WHY IT MATTERS</span>
+      <p class="cl-hero-why-text">Billions of constrained devices — meters, sensors, RFID tags — can't afford AES hardware or side-channel masking. Ascon is the NIST-chosen standard built for them: tiny state, naturally constant-time, one primitive for AEAD, hashing, and XOF.</p>
+    </aside>
+  </header>
 
   <main id="main-content" class="layout">
     <section class="panel" id="exhibit-sponge">
