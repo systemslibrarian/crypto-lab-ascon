@@ -8,6 +8,12 @@
   --text: #dde8f9;
   --muted: #9db0cd;
   --border: rgba(103, 139, 188, 0.35);
+  /* Control boundaries only. Inputs, textareas and buttons share a translucent
+     fill that resolves to ~1.01-1.06:1 against the panel behind them, so the
+     border is the sole boundary and WCAG 2.1 SC 1.4.11 requires 3:1. The
+     translucent --border resolves to ~1.7:1 and stays as-is for decorative rules
+     (panel outlines, table rules, badges). */
+  --border-strong: #456b9e;
   --rate: #00d4ff;
   --capacity: #ff00aa;
   --msg: #00ff88;
@@ -26,6 +32,7 @@
   --text: #112034;
   --muted: #3a527a;
   --border: rgba(56, 87, 123, 0.25);
+  --border-strong: #678dba;
   --shadow: 0 24px 55px rgba(27, 51, 89, 0.2);
   /* The neon dark-theme accents fail contrast on a light background. Override
      the ones used as text or focus indicators with AA-compliant equivalents. */
@@ -158,7 +165,7 @@ button {
   /* 44px minimum tap target height (WCAG 2.5.5). */
   min-height: 44px;
   border-radius: 10px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   background-color: rgba(8, 18, 33, 0.45);
   color: var(--text);
   font-family: 'IBM Plex Mono', monospace;
@@ -189,7 +196,7 @@ button:disabled {
 
 button:disabled:hover {
   transform: none;
-  border-color: var(--border);
+  border-color: var(--border-strong);
 }
 
 button:focus-visible,
