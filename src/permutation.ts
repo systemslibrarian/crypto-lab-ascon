@@ -109,7 +109,9 @@ export function p12(state: AsconState): AsconState {
 }
 
 /**
- * p8 - 8 rounds (Ascon-Hash256).
+ * p8 - 8 rounds. Used by Ascon-AEAD128 for the associated-data and
+ * plaintext/ciphertext phases. (Ascon-Hash256 and Ascon-XOF128 use p12
+ * throughout - see hash.ts / xof.ts.)
  */
 export function p8(state: AsconState): AsconState {
   let s = state;
@@ -120,7 +122,11 @@ export function p8(state: AsconState): AsconState {
 }
 
 /**
- * p6 - 6 rounds (AEAD data absorption).
+ * p6 - 6 rounds. Not used by any algorithm in this demo: the data phase of
+ * the older Ascon-128 v1.2 submission ran 6 rounds, but the standardized
+ * Ascon-AEAD128 of NIST SP 800-232 uses p8 there. Kept only so the
+ * permutation module is complete and the round-count difference between the
+ * competition candidate and the final standard is inspectable.
  */
 export function p6(state: AsconState): AsconState {
   let s = state;
