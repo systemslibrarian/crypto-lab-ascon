@@ -3,7 +3,7 @@ import { asconHash256 } from '../hash';
 import { asconXof128 } from '../xof';
 
 /**
- * Exhibit: Ascon-XOF128, the third algorithm in FIPS SP 800-232.
+ * Exhibit: Ascon-XOF128, the third algorithm in NIST SP 800-232.
  * Same sponge as Ascon-Hash256, but the squeeze phase runs as long as the
  * caller wants — drag the slider and watch the output grow while the bytes
  * already squeezed stay put (the prefix property).
@@ -13,7 +13,7 @@ export function sectionHtml(num: number): string {
   return `
     <section class="panel" id="exhibit-xof">
       <h2><span class="ex-num" aria-hidden="true">${num}</span> Ascon-XOF128 — A Hash With a Volume Knob</h2>
-      <p>FIPS SP 800-232 standardizes three algorithms; this is the third. An <strong>extendable-output function</strong> is a sponge you keep squeezing: you choose the output length at call time. Drag the slider — earlier bytes never change, because longer output just means more squeeze steps of the same state.</p>
+      <p>NIST SP 800-232 standardizes four algorithms; this is the third. An <strong>extendable-output function</strong> is a sponge you keep squeezing: you choose the output length at call time. Drag the slider — earlier bytes never change, because longer output just means more squeeze steps of the same state.</p>
       <label>Input Text
         <input id="xof-input" type="text" value="Hello" />
       </label>

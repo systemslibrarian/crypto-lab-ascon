@@ -48,7 +48,7 @@ app.innerHTML = `
   <header class="cl-hero">
     <div class="cl-hero-main">
       <h1 class="cl-hero-title">Ascon</h1>
-      <p class="cl-hero-sub">NIST Lightweight Cryptography · FIPS SP 800-232</p>
+      <p class="cl-hero-sub">NIST Lightweight Cryptography · NIST SP 800-232</p>
       <p class="cl-hero-desc">Watch the 320-bit permutation diffuse, then run real Ascon-AEAD128 encryption, Ascon-Hash256, and the XOF — all built from the spec and verified against the official NIST KAT vectors.</p>
       <ul class="badges" aria-label="At a glance">
         <li>320-bit state</li>
@@ -193,7 +193,7 @@ x4 ^= (x4 &gt;&gt;&gt;  7) ^ (x4 &gt;&gt;&gt; 41)</pre>
           <tr><td>Code size</td><td><strong>Smallest</strong></td><td>Medium</td><td>Small</td></tr>
           <tr><td>Hardware deps</td><td>None</td><td>AES-NI for speed</td><td>None</td></tr>
           <tr><td>Side-channel</td><td><strong>Strong</strong> (constant-time natural)</td><td>Needs AES-NI or masking</td><td>Strong</td></tr>
-          <tr><td>NIST standard</td><td>FIPS SP 800-232</td><td>FIPS 197 + 800-38D</td><td>RFC 8439</td></tr>
+          <tr><td>NIST standard</td><td>NIST SP 800-232</td><td>FIPS 197 + 800-38D</td><td>RFC 8439</td></tr>
           <tr><td>Target</td><td>IoT / embedded</td><td>General-purpose</td><td>General-purpose</td></tr>
         </tbody>
       </table>

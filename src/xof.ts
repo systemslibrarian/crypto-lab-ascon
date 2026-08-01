@@ -2,7 +2,7 @@ import { stateRateToBytes, withRate } from './bytes';
 import { p12, type AsconState } from './permutation';
 
 /**
- * Ascon-XOF128 (FIPS SP 800-232 Section 5.2).
+ * Ascon-XOF128 (NIST SP 800-232 Section 5.2).
  * An extendable-output function: same sponge as Ascon-Hash256, but the
  * squeeze phase runs for as many blocks as the caller asks — the output
  * length is chosen at call time, not fixed by the algorithm.

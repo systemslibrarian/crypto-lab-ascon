@@ -7,7 +7,7 @@ export type AsconState = [bigint, bigint, bigint, bigint, bigint];
 export const MASK64 = (1n << 64n) - 1n;
 
 /**
- * Round constants (FIPS SP 800-232 Table 5).
+ * Round constants (NIST SP 800-232 Table 5).
  * p12 uses indices 0..11
  * p8 uses indices 4..11
  * p6 uses indices 6..11
@@ -47,7 +47,7 @@ export function addConstant(state: AsconState, c: bigint): AsconState {
 
 /**
  * 5-bit S-box, bit-sliced across 64 parallel lanes.
- * FIPS SP 800-232 Section 3.2.
+ * NIST SP 800-232 Section 3.2.
  */
 export function sbox(state: AsconState): AsconState {
   let [x0, x1, x2, x3, x4] = state;

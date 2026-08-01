@@ -1,7 +1,7 @@
 # crypto-lab-ascon
 
 ## What It Is
-Browser-based demo of Ascon, the NIST Lightweight Cryptography Standard (FIPS SP 800-232, 2025). It implements all three standardized algorithms — Ascon-AEAD128 authenticated encryption, Ascon-Hash256, and Ascon-XOF128 — from the specification using real bitwise arithmetic with no external crypto libraries. All 64-bit operations use BigInt for precision. The sponge construction, S-box, and linear diffusion layer are implemented directly from the spec and verified against official KAT vectors. The interactive sponge exhibit renders the actual 320 bits of live state — every square is a real bit — so you can watch the permutation diffuse the state toward ~50% density rather than trusting a decorative bar.
+Browser-based demo of Ascon, the NIST Lightweight Cryptography Standard (NIST SP 800-232, 2025). It implements three of its four standardized algorithms — Ascon-AEAD128 authenticated encryption, Ascon-Hash256, and Ascon-XOF128 (the fourth, Ascon-CXOF128, is not covered) — from the specification using real bitwise arithmetic with no external crypto libraries. All 64-bit operations use BigInt for precision. The sponge construction, S-box, and linear diffusion layer are implemented directly from the spec and verified against official KAT vectors. The interactive sponge exhibit renders the actual 320 bits of live state — every square is a real bit — so you can watch the permutation diffuse the state toward ~50% density rather than trusting a decorative bar.
 
 ## Exhibits
 1. **The Sponge Construction** — the live 320-bit state, steppable per round *and per layer* (add-constant → S-box → linear diffusion) with the bits each step touched flashing gold; a four-step AEAD walkthrough driving the exact production functions, with ordering guardrails that teach instead of failing silently; and an **S-box microscope** — highlight any of the 64 bit-columns in the live grid and toggle the 5 inputs of the real bitsliced `sbox()` code (no lookup table exists to consult).
@@ -36,7 +36,7 @@ Run Ascon-AEAD128 encryption and Ascon-Hash256 in the browser and watch the inte
 - Nonce reuse breaks the AEAD guarantees, as with any nonce-based authenticated cipher.
 
 ## Real-World Usage
-- NIST FIPS SP 800-232 was finalized in 2025 after the Lightweight Cryptography competition.
+- NIST SP 800-232 was finalized in August 2025 after the Lightweight Cryptography competition.
 - Ascon was selected in February 2023 from 57 original submissions.
 - Early adoption targets include automotive in-vehicle networks, RFID authentication, and industrial IoT sensors.
 - Further targets include smart-card communications and embedded firmware verification pipelines.
@@ -71,5 +71,7 @@ Correctness is the headline: `test/kat-full.test.ts` runs every vector in the of
 This implementation optimizes for legibility, not throughput: all 64-bit operations use `BigInt`, which V8 boxes on the heap. Measured ~1.7 MB/s for AEAD and ~0.5 MB/s for hashing in Node — fine for an interactive demo, but native C/Rust Ascon (using machine 64-bit words) runs orders of magnitude faster, and `crypto.subtle` AES-GCM on AES-NI hardware reaches multiple GB/s. The point of Ascon is small code and state on constrained devices, not raw speed on a desktop CPU.
 
 ---
+
+*One of 170+ browser demos in the [Crypto Lab](https://crypto-lab.systemslibrarian.dev/) suite.*
 
 *"So whether you eat or drink or whatever you do, do it all for the glory of God." — 1 Corinthians 10:31*

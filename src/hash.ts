@@ -2,7 +2,7 @@ import { stateRateToBytes, withRate } from './bytes';
 import { p12, type AsconState } from './permutation';
 
 /**
- * Ascon-Hash256 (FIPS SP 800-232 Section 5).
+ * Ascon-Hash256 (NIST SP 800-232 Section 5).
  * Output: 256 bits = 32 bytes.
  * IV for Hash256 = 0x0000080100cc0002.
  * Uses p12 for init, absorption, and squeezing.

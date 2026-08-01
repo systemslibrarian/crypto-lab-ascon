@@ -2,7 +2,7 @@ import { concatBytes, load64, stateRateToBytes, store64, withRate } from './byte
 import { p12, p8, type AsconState } from './permutation';
 
 /**
- * Ascon-AEAD128 (FIPS SP 800-232 Section 4).
+ * Ascon-AEAD128 (NIST SP 800-232 Section 4).
  * Key: 128 bits. Nonce: 128 bits. Tag: 128 bits.
  * Initial value IV = 0x00001000808c0001.
  */
