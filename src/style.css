@@ -86,7 +86,6 @@ a {
   padding: 2rem 1rem 3rem;
 }
 
-/* BEGIN cl-hero standard — managed, keep in sync across fleet */
 /* Accent/tint/text colors map to this demo's theme vars: --text-dim -> --muted,
    --accent -> --link (both AA in dark and light). */
 .cl-hero{display:flex;align-items:flex-start;justify-content:space-between;gap:clamp(1rem,4vw,3rem);flex-wrap:wrap;margin:clamp(1rem,3vw,2rem) 0 1.5rem;}
@@ -97,8 +96,7 @@ a {
 .cl-hero-why{flex:0 1 min(40%,26rem);min-width:min(100%,15rem);border:1px solid var(--border);border-radius:10px;padding:.85rem 1.05rem;background:color-mix(in oklab,var(--link) 6%,transparent);}
 .cl-hero-why-label{display:block;font-size:.68rem;font-weight:700;letter-spacing:.14em;}
 .cl-hero-why-text{margin:.35rem 0 0;font-size:.95rem;line-height:1.5;}
-@media (max-width:640px){.cl-hero{flex-direction:column;}.cl-hero-why{flex-basis:auto;width:100%;}}
-/* END cl-hero standard */
+@media (max-width:640px){.cl-hero{flex-direction:column;}.cl-hero-why{flex-basis:auto;width:100%;}.cl-hero-main{flex-basis:auto;min-width:0;}}
 
 .cl-hero-main .badges{justify-content:flex-start;margin:1rem 0 0;}
 .cl-hero-main .ghost{margin-top:1rem;}
@@ -157,6 +155,8 @@ input,
 textarea,
 button {
   width: 100%;
+  /* 44px minimum tap target height (WCAG 2.5.5). */
+  min-height: 44px;
   border-radius: 10px;
   border: 1px solid var(--border);
   background-color: rgba(8, 18, 33, 0.45);
@@ -447,6 +447,10 @@ h2 .ex-num {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 0.82rem;
   white-space: pre-wrap;
+  /* Hex digests and user-supplied strings offer no break opportunities; without
+     this they push the page wider than a 360px viewport. `.codeblock` sets
+     white-space:pre and scrolls instead, so it is unaffected. */
+  overflow-wrap: anywhere;
 }
 
 .status {
