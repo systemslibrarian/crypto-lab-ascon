@@ -16,11 +16,11 @@ export default defineConfig({
     // Without the build, a source change that fails to compile leaves the last
     // good bundle in place and the suite passes green against code that no
     // longer builds — which silently invalidates mutation checks.
-    command: 'npm run build && npm run preview -- --port 4173 --strictPort',
-    url: 'http://localhost:4173/crypto-lab-ascon/',
+    command: 'npm run build && npm run preview -- --port 4601 --strictPort',
+    url: 'http://localhost:4601/crypto-lab-ascon/',
     reuseExistingServer: !process.env.CI,
   },
   use: {
-    baseURL: 'http://localhost:4173/crypto-lab-ascon/',
+    baseURL: 'http://localhost:4601/crypto-lab-ascon/',
   },
 });
