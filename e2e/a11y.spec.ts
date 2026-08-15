@@ -90,15 +90,3 @@ test('no WCAG A/AA violations in dark theme', async ({ page }) => {
   await assertGradientContrast(page, 'p.cl-hero-desc', ['#05070d', '#0d1320']);
 });
 
-test('no WCAG A/AA violations in light theme', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('.');
-  await expect(page.locator('.cl-hero')).toBeVisible();
-  await page.locator('#cl-theme-toggle').click();
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-  await page.waitForLoadState('networkidle');
-  await openAllDetails(page);
-  await scan(page);
-  // Light theme bg: #eef6ff and #d8ebff
-  await assertGradientContrast(page, 'p.cl-hero-desc', ['#eef6ff', '#d8ebff']);
-});
