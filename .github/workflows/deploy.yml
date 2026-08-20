@@ -97,6 +97,21 @@ jobs:
           done
           echo "::warning::gate passed but the merge did not land after 3 attempts;"
           echo "::warning::leaving this PR open - Dependabot will rebase and retry."
+      # A merge made with GITHUB_TOKEN raises no push event -- GitHub suppresses
+      # them to stop workflows retriggering themselves. Deploy is not triggered by
+      # a GITHUB_TOKEN merge, so ask for it explicitly. workflow_dispatch via the
+      # API is not suppressed. The dispatched run is the full gate then deploy, so
+      # a bad merge still ships nothing.
+      - name: Deploy the merged result
+        if: success()
+        run: |
+          if gh pr view "$PR_URL" --json state --jq .state | grep -q MERGED; then
+            gh workflow run deploy.yml --repo "$GITHUB_REPOSITORY" --ref main \
+              || echo "::warning::deploy dispatch failed; run deploy.yml by hand"
+          fi
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
