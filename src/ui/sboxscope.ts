@@ -19,7 +19,7 @@ export function fragmentHtml(): string {
     .map(
       (i) => `
         <span class="sbox-lane">
-          <button id="sb-in-${i}" class="sbox-toggle" type="button" aria-pressed="false" aria-label="S-box input bit x${i}"><span class="sbox-digit" aria-hidden="true">0</span></button>
+          <button id="sb-in-${i}" class="sbox-toggle" type="button" aria-pressed="false" aria-label="S-box input bit x${i} set to 0"><span class="sbox-digit">0</span></button>
           <span class="sbox-lane-label" aria-hidden="true">x${i}</span>
           <output id="sb-out-${i}" class="sbox-lamp" aria-label="S-box output bit x${i}">0</output>
         </span>`,
@@ -72,14 +72,18 @@ export function wire(
       // x0 is the most-significant bit of the 5-bit value, per the spec.
       inVal = (inVal << 1) | (inBit ? 1 : 0);
       outVal = (outVal << 1) | (outBit ? 1 : 0);
-      // Into the aria-hidden digit, not the button itself. Replacing the
-      // button's textContent would delete that span and make the bare digit
-      // the control's visible label again, which is what axe 4.14 flags as
-      // label-content-name-mismatch: "1" is not a word in "S-box input bit
-      // x0". The value is state, and aria-pressed below already carries it.
+      // The digit the button shows IS its visible label, so the accessible
+      // name has to contain it or axe 4.14 reports label-content-name-mismatch
+      // (WCAG 2.5.3 Label in Name): "1" is not a word in "S-box input bit x0".
+      // Marking the digit aria-hidden does NOT satisfy the rule -- it compares
+      // against what a SIGHTED user sees, and aria-hidden content is still on
+      // screen. Measured: the hidden-digit version passed under axe 4.13 and
+      // failed under the 4.14 this bump installs. So the name carries the
+      // value and moves with it, beside aria-pressed.
       const digit = inputs[i].querySelector('.sbox-digit');
       if (digit) digit.textContent = inBit ? '1' : '0';
       else inputs[i].textContent = inBit ? '1' : '0';
+      inputs[i].setAttribute('aria-label', `S-box input bit x${i} set to ${inBit ? 1 : 0}`);
       inputs[i].setAttribute('aria-pressed', inBit ? 'true' : 'false');
       inputs[i].classList.toggle('lit', inBit);
       outputs[i].textContent = outBit ? '1' : '0';
