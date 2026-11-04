@@ -4,7 +4,7 @@ import { expect, test, type Page } from '@playwright/test';
 /**
  * WCAG regression gate. Deploys are already gated on the NIST KAT vectors;
  * this gates them on accessibility the same way. Scans the full page with
- * every <details> expanded, in both themes.
+ * every <details> expanded, in the supported dark theme.
  */
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
@@ -88,5 +88,26 @@ test('no WCAG A/AA violations in dark theme', async ({ page }) => {
   await scan(page);
   // Dark theme bg: #05070d and #0d1320
   await assertGradientContrast(page, 'p.cl-hero-desc', ['#05070d', '#0d1320']);
+});
+
+test('nonce recipient results stay accessible on a narrow screen', async ({ page }) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('.');
+  await page.getByRole('button', { name: 'Encrypt Both — SAME Nonce' }).click();
+  await page.getByRole('button', { name: 'Flip Message 2 Tag Bit' }).click();
+  await expect(page.locator('#nr-tamper-status')).toContainText('No plaintext released.');
+  await expect(page.locator('#bench-scroll')).toBeHidden();
+  await page.getByRole('button', { name: 'Run Benchmark' }).click();
+  await expect(page.locator('#bench-status')).toHaveText('Done.', { timeout: 60_000 });
+  await expect(page.getByRole('region', { name: 'Benchmark results, scroll horizontally on small screens' })).toBeVisible();
+  await scan(page);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  const comparison = page.getByRole('region', { name: 'Cipher comparison, scroll horizontally on small screens' });
+  await comparison.focus();
+  await expect(comparison).toBeFocused();
+  await page.keyboard.press('ArrowRight');
+  await expect.poll(() => comparison.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);
 });
 

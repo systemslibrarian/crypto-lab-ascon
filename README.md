@@ -7,7 +7,7 @@ Browser-based demo of Ascon, the NIST Lightweight Cryptography Standard (NIST SP
 1. **The Sponge Construction** — the live 320-bit state, steppable per round *and per layer* (add-constant → S-box → linear diffusion) with the bits each step touched flashing gold; a four-step AEAD walkthrough driving the exact production functions, with ordering guardrails that teach instead of failing silently; and an **S-box microscope** — highlight any of the 64 bit-columns in the live grid and toggle the 5 inputs of the real bitsliced `sbox()` code (no lookup table exists to consult).
 2. **The Avalanche** — two copies of the permutation whose inputs differ in exactly one bit, painting their XOR each round: one bit becomes ~160 of 320 in 3–4 rounds. Round constants cancel in the XOR, so every lit square traces back to the seed bit.
 3. **AEAD Encryption — Live** — encrypt/decrypt/tamper with your own key, nonce, AD and plaintext, plus **shareable lesson links** that freeze a scenario into a URL for classrooms.
-4. **Break It Yourself — Nonce Reuse** — encrypt two messages under the same nonce and recover one from the other with XOR alone, no key required; includes the duplex-sponge nuance (the leak runs through the first differing block, unlike a pure stream cipher), which is pinned down by a unit test.
+4. **Break It Yourself — Nonce Reuse** — encrypt two messages under the same nonce and recover their shared prefix from one known message with XOR alone, no key required. The duplex-sponge leak runs through the first differing block; later accidental byte matches are not counted as guaranteed recovery. Real authenticated decryption checks both honest packets, and separate one-bit ciphertext/tag controls show recipient rejection without plaintext release. These measured checks do not establish general forgery resistance under nonce reuse. Editing either message clears stale results; empty messages still have a tag to verify.
 5. **Ascon-Hash256** — hashing plus a single-bit avalanche test over the digest.
 6. **Ascon-XOF128** — a hash with a volume knob: drag the output length and watch the prefix property hold; compare against Hash256 to see algorithm-level domain separation.
 7. **Comparison table** — Ascon vs AES-GCM vs ChaCha20-Poly1305.
@@ -33,7 +33,7 @@ Run Ascon-AEAD128 encryption and Ascon-Hash256 in the browser and watch the inte
 - 128-bit keys provide a smaller long-term margin than AES-256.
 - BigInt in browsers is slower than native 64-bit C/Rust implementations.
 - Ascon has less historical cryptanalysis depth than AES, even as a finalized NIST standard.
-- Nonce reuse breaks the AEAD guarantees, as with any nonce-based authenticated cipher.
+- Nonce reuse with Ascon-AEAD128 can disclose plaintext relationships even when honestly generated packets have valid tags. Keep nonces unique; acceptance of those packets does not establish general authenticity under nonce misuse.
 
 ## Real-World Usage
 - NIST SP 800-232 was finalized in August 2025 after the Lightweight Cryptography competition.
@@ -60,12 +60,14 @@ npm run dev
 ## Build & Verify
 ```bash
 npm install
-npm test          # 25 unit tests, incl. the full official NIST AEAD + Hash + XOF KAT vector files
+npm test          # unit tests, incl. the full official NIST AEAD + Hash + XOF KAT vector files
 npm run build
 npm run test:a11y # Playwright: functional smoke tests + axe-core WCAG A/AA scan (build first)
 npm run dev       # local dev server
 ```
-Correctness is the headline: `test/kat-full.test.ts` runs every vector in the official `LWC_AEAD_KAT_128_128.txt` and `LWC_HASH_KAT_128_256.txt` files through encrypt, decrypt, and hash; `test/xof.test.ts` does the same for `LWC_XOF_KAT_128_512.txt` plus the prefix property; and `test/permutation.test.ts` checks `p12` against the ascon-c reference output. `test/roundtrip.fuzz.test.ts` adds randomized round-trip, single-bit-tamper, and full block-boundary (length 0–40) coverage, and `test/nonce-reuse.test.ts` pins down the exact leak structure the nonce-reuse exhibit teaches. The e2e suite exercises every exhibit against the production build and gates on zero axe-core WCAG A/AA violations in both themes. The GitHub Pages deploy is gated on all of it, so neither a broken implementation nor an accessibility regression ever ships.
+Correctness is the headline: `test/kat-full.test.ts` runs every vector in the official `LWC_AEAD_KAT_128_128.txt` and `LWC_HASH_KAT_128_256.txt` files through encrypt, decrypt, and hash; `test/xof.test.ts` does the same for `LWC_XOF_KAT_128_512.txt` plus the prefix property; and `test/permutation.test.ts` checks `p12` against the ascon-c reference output. `test/roundtrip.fuzz.test.ts` adds randomized round-trip, single-bit-tamper, and full block-boundary (length 0–40) coverage. `test/nonce-reuse.test.ts` checks the leak prefix, honest recipient verification, independent tamper controls, empty-message acceptance and rejection without returning plaintext. Browser tests exercise those results, message edits and stale-output clearing against the production build. The Pages workflow requires the unit tests, build and browser/accessibility suite before deployment; passing them is bounded evidence, not a security or accessibility certification.
+
+The nonce-reuse lesson cites Charlotte Lefevre and Bart Mennink, [*SoK: Security of the Ascon Modes*](https://doi.org/10.46586/tosc.v2025.i1.138-210), for the distinction between confidentiality, authenticity and misuse models. It does not implement the paper's security games or transfer ideal-permutation bounds to this browser build.
 
 ## Performance
 This implementation optimizes for legibility, not throughput: all 64-bit operations use `BigInt`, which V8 boxes on the heap. Measured ~1.7 MB/s for AEAD and ~0.5 MB/s for hashing in Node — fine for an interactive demo, but native C/Rust Ascon (using machine 64-bit words) runs orders of magnitude faster, and `crypto.subtle` AES-GCM on AES-NI hardware reaches multiple GB/s. The point of Ascon is small code and state on constrained devices, not raw speed on a desktop CPU.
