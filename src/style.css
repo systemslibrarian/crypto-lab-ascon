@@ -202,7 +202,8 @@ button:disabled:hover {
 button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
-a:focus-visible {
+a:focus-visible,
+.table-wrap:focus-visible {
   outline: 3px solid var(--tag);
   outline-offset: 2px;
 }

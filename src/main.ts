@@ -181,7 +181,7 @@ x4 ^= (x4 &gt;&gt;&gt;  7) ^ (x4 &gt;&gt;&gt; 41)</pre>
 
     <section class="panel" id="exhibit-compare">
       <h2><span class="ex-num" aria-hidden="true">7</span> Ascon vs AES-GCM vs ChaCha20-Poly1305</h2>
-      <div class="table-wrap">
+      <div class="table-wrap" tabindex="0" role="region" aria-label="Cipher comparison, scroll horizontally on small screens">
       <table>
         <caption>Comparison of cryptographic properties for constrained-device use.</caption>
         <thead>

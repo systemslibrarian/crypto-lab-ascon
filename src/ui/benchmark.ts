@@ -24,7 +24,7 @@ export function sectionHtml(num: number): string {
         <button id="bench-run" type="button">Run Benchmark</button>
       </div>
       <p id="bench-status" class="status neutral" role="status" aria-live="polite"></p>
-      <div class="table-wrap">
+      <div class="table-wrap" id="bench-scroll" hidden tabindex="0" role="region" aria-label="Benchmark results, scroll horizontally on small screens">
         <table id="bench-table" hidden>
           <caption>Throughput measured just now in this browser tab (single run, indicative only).</caption>
           <thead>
@@ -42,6 +42,7 @@ export function wire(byId: <T extends HTMLElement>(id: string) => T): void {
   const runBtn = byId<HTMLButtonElement>('bench-run');
   const status = byId<HTMLParagraphElement>('bench-status');
   const table = byId<HTMLTableElement>('bench-table');
+  const tableScroll = byId<HTMLDivElement>('bench-scroll');
   const body = byId<HTMLTableSectionElement>('bench-body');
   const verdict = byId<HTMLParagraphElement>('bench-verdict');
 
@@ -70,6 +71,7 @@ export function wire(byId: <T extends HTMLElement>(id: string) => T): void {
     body.textContent = '';
     verdict.textContent = '';
     table.hidden = true;
+    tableScroll.hidden = true;
 
     const data = new Uint8Array(PAYLOAD_BYTES);
     for (let i = 0; i < data.length; i += 1) {
@@ -115,6 +117,7 @@ export function wire(byId: <T extends HTMLElement>(id: string) => T): void {
       addRow('Ascon-Hash256', 'this demo, BigInt, single thread', asconHashMibps);
       addRow('SHA-256', 'crypto.subtle, native', shaMibps);
       table.hidden = false;
+      tableScroll.hidden = false;
 
       const ratio = aesMibps / asconAeadMibps;
       status.textContent = 'Done.';

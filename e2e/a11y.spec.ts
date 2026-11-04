@@ -91,13 +91,23 @@ test('no WCAG A/AA violations in dark theme', async ({ page }) => {
 });
 
 test('nonce recipient results stay accessible on a narrow screen', async ({ page }) => {
+  test.setTimeout(90_000);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('.');
   await page.getByRole('button', { name: 'Encrypt Both — SAME Nonce' }).click();
   await page.getByRole('button', { name: 'Flip Message 2 Tag Bit' }).click();
   await expect(page.locator('#nr-tamper-status')).toContainText('No plaintext released.');
+  await expect(page.locator('#bench-scroll')).toBeHidden();
+  await page.getByRole('button', { name: 'Run Benchmark' }).click();
+  await expect(page.locator('#bench-status')).toHaveText('Done.', { timeout: 60_000 });
+  await expect(page.getByRole('region', { name: 'Benchmark results, scroll horizontally on small screens' })).toBeVisible();
   await scan(page);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  const comparison = page.getByRole('region', { name: 'Cipher comparison, scroll horizontally on small screens' });
+  await comparison.focus();
+  await expect(comparison).toBeFocused();
+  await page.keyboard.press('ArrowRight');
+  await expect.poll(() => comparison.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);
 });
 
