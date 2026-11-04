@@ -86,9 +86,60 @@ test('nonce reuse leaks P1 XOR P2 and recovers Message 2; fresh nonces do not', 
   const cxor = await page.locator('#nr-cxor').inputValue();
   const pxor = await page.locator('#nr-pxor').inputValue();
   expect(cxor).toBe(pxor);
+  await expect(page.locator('#nr-honest-checks')).toContainText('Message 1: tag verified; recovered bytes match the message.');
+  await expect(page.locator('#nr-honest-checks')).toContainText('Message 2: tag verified; recovered bytes match the message.');
 
   await page.getByRole('button', { name: 'Encrypt Both — Fresh Nonces' }).click();
-  await expect(page.locator('#nr-verdict')).toContainText('✓ Safe');
+  await expect(page.locator('#nr-verdict')).toContainText('No reused-keystream recovery');
+  await expect(page.locator('#nr-honest-checks')).toContainText('Message 2: tag verified; recovered bytes match the message.');
+});
+
+for (const mode of ['SAME Nonce', 'Fresh Nonces']) {
+  test(`nonce recipient rejects both one-bit controls with ${mode}`, async ({ page }) => {
+    await expect(page.locator('#nr-tamper-ciphertext')).toBeDisabled();
+    await expect(page.locator('#nr-tamper-tag')).toBeDisabled();
+    await page.getByRole('button', { name: `Encrypt Both — ${mode}` }).click();
+    for (const target of ['ciphertext', 'tag']) {
+      // A failed check must also clear any stale recipient output.
+      await page.locator('#nr-recipient-output').evaluate((node: HTMLTextAreaElement) => {
+        node.value = 'stale recipient plaintext';
+      });
+      await page.locator(`#nr-tamper-${target}`).click();
+      await expect(page.locator('#nr-tamper-status')).toHaveText(
+        `REJECTED: Message 2 ${target} bit changed; tag verification failed. No plaintext released.`,
+      );
+      await expect(page.locator('#nr-recipient-output')).toHaveValue('');
+    }
+  });
+}
+
+test('editing messages clears nonce evidence and requires another encryption run', async ({ page }) => {
+  await page.getByRole('button', { name: 'Encrypt Both — SAME Nonce' }).click();
+  await page.locator('#nr-tamper-tag').click();
+  await page.locator('#nr-pt1').fill('A changed first message');
+  await expect(page.locator('#nr-verdict')).toContainText('Messages changed');
+  await expect(page.locator('#nr-honest-checks')).toContainText('Messages changed');
+  await expect(page.locator('#nr-c1')).toHaveValue('');
+  await expect(page.locator('#nr-recovered')).toHaveValue('');
+  await expect(page.locator('#nr-recipient-output')).toHaveValue('');
+  await expect(page.locator('#nr-tamper-ciphertext')).toBeDisabled();
+  await expect(page.locator('#nr-tamper-tag')).toBeDisabled();
+  await page.getByRole('button', { name: 'Encrypt Both — SAME Nonce' }).click();
+  await expect(page.locator('#nr-honest-checks')).toContainText('Message 1: tag verified');
+  await expect(page.locator('#nr-tamper-status')).toHaveText('No modified packet tested for this run.');
+  await expect(page.locator('#nr-tamper-ciphertext')).toBeEnabled();
+});
+
+test('empty Message 2 still has a verifiable and tamperable tag', async ({ page }) => {
+  await page.locator('#nr-pt2').fill('');
+  await page.getByRole('button', { name: 'Encrypt Both — SAME Nonce' }).click();
+  await expect(page.locator('#nr-verdict')).toContainText('No shared message bytes');
+  await expect(page.locator('#nr-honest-checks')).toContainText('Message 2: tag verified; recovered bytes match the message.');
+  await expect(page.locator('#nr-tamper-ciphertext')).toBeDisabled();
+  await expect(page.locator('#nr-tamper-tag')).toBeEnabled();
+  await page.locator('#nr-tamper-tag').click();
+  await expect(page.locator('#nr-tamper-status')).toContainText('No plaintext released.');
+  await expect(page.locator('#nr-recipient-output')).toHaveValue('');
 });
 
 test('hash and avalanche exhibits produce a 256-bit digest and ~50% flip rate', async ({ page }) => {
