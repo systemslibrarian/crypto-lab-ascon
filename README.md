@@ -77,3 +77,7 @@ This implementation optimizes for legibility, not throughput: all 64-bit operati
 *Part of the [Crypto Lab](https://crypto-lab.systemslibrarian.dev/) suite.*
 
 *"So whether you eat or drink or whatever you do, do it all for the glory of God." — 1 Corinthians 10:31*
+
+## Research scope review — November 2026
+
+CL3142 / CL1395: A single-pair avalanche demonstrates diffusion, not a security proof or safe round count. The benchmark compares this BigInt build with native WebCrypto; a microcontroller ranking reversal requires target measurements. Grain embedded measurements (https://eprint.iacr.org/2020/659) are not Ascon performance results. No reduced-round attack was reproduced.
