@@ -16,7 +16,7 @@ export function sectionHtml(num: number): string {
   return `
     <section class="panel" id="exhibit-diffusion">
       <h2><span class="ex-num" aria-hidden="true">${num}</span> The Avalanche — One Bit Becomes Half the State</h2>
-      <p>Two copies of the sponge run side by side, their inputs differing in <strong>exactly one bit</strong>. Each gold square below is a bit where they now disagree. Step the real <code>round()</code> function and watch one bit of difference cascade to ~160 of 320 bits in 3–4 rounds — this is why Ascon needs so few rounds to be secure.</p>
+      <p>Two copies of the sponge run side by side, their inputs differing in <strong>exactly one bit</strong>. Each gold square below is a bit where they now disagree. Step the real <code>round()</code> function and watch the changed-bit count evolve, often toward roughly half of the 320-bit state. This single-pair avalanche illustrates diffusion; it does not prove security, establish a safe round count, or reproduce a keyed AEAD attack.</p>
       <div class="grid2">
         <label>Seed bit (0–319)
           <input id="diff-seed" type="number" min="0" max="319" value="160" />

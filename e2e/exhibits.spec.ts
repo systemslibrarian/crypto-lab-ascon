@@ -174,12 +174,14 @@ test('lesson links restore the AEAD scenario from the URL', async ({ page }) => 
   await expect(page.locator('#aead-status')).toContainText('Loaded shared lesson scenario');
 });
 
-test('benchmark runs to completion and reports native AES-GCM as faster', async ({ page }) => {
+test('benchmark reports measured ratio without promising another target ranking', async ({ page }) => {
   test.setTimeout(120_000);
   await page.getByRole('button', { name: 'Run Benchmark' }).click();
   await expect(page.locator('#bench-status')).toHaveText('Done.', { timeout: 90_000 });
   await expect(page.locator('#bench-table')).toBeVisible();
-  await expect(page.locator('#bench-verdict')).toContainText('beat this BigInt Ascon');
+  await expect(page.locator('#bench-verdict')).toContainText('Measured AES-GCM / BigInt Ascon throughput ratio:');
+  await expect(page.locator('#bench-verdict')).toContainText('a ranking reversal is not guaranteed');
+  await expect(page.locator('#bench-verdict')).toContainText('below 1 favors Ascon');
 });
 
 test('quiz scores answers and points misses at exhibits', async ({ page }) => {

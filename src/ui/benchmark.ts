@@ -113,7 +113,7 @@ export function wire(byId: <T extends HTMLElement>(id: string) => T): void {
       const shaMibps = mibPerSecond(PAYLOAD_BYTES * SUBTLE_ITERATIONS, performance.now() - t0);
 
       addRow('Ascon-AEAD128', 'this demo, BigInt, single thread', asconAeadMibps);
-      addRow('AES-256-GCM', 'crypto.subtle, native + AES-NI', aesMibps);
+      addRow('AES-256-GCM', 'crypto.subtle, native; acceleration platform-dependent', aesMibps);
       addRow('Ascon-Hash256', 'this demo, BigInt, single thread', asconHashMibps);
       addRow('SHA-256', 'crypto.subtle, native', shaMibps);
       table.hidden = false;
@@ -123,10 +123,10 @@ export function wire(byId: <T extends HTMLElement>(id: string) => T): void {
       status.textContent = 'Done.';
       status.className = 'status good';
       verdict.textContent =
-        `Native AES-GCM just beat this BigInt Ascon by ~${ratio >= 100 ? Math.round(ratio) : ratio.toFixed(1)}× on your machine. ` +
-        'That is the correct outcome: a desktop CPU has hardware AES and fast 64-bit words. ' +
-        'Flip the scenario to an 8-bit microcontroller with 2 KB of RAM and no AES hardware, and the ranking inverts — ' +
-        'which is exactly the niche NIST standardized Ascon for. (A native C/Rust Ascon also runs orders of magnitude faster than this teaching build.)';
+        `Measured AES-GCM / BigInt Ascon throughput ratio: ${ratio >= 100 ? Math.round(ratio) : ratio.toFixed(2)}× (above 1 favors AES-GCM; below 1 favors Ascon). ` +
+        'This compares native WebCrypto with this teaching implementation for the selected workload, not the algorithms in isolation. ' +
+        'Hardware AES acceleration and native implementations can change the result. An 8-bit microcontroller with 2 KB of RAM and no AES hardware needs its own measurements; a ranking reversal is not guaranteed. ' +
+        'Compare implementation, target, message length, RAM, code size and energy before transferring a benchmark result.';
     } catch (error) {
       status.textContent = `Benchmark failed: ${(error as Error).message}`;
       status.className = 'status bad';
