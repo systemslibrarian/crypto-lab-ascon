@@ -47,7 +47,7 @@ export function addConstant(state: AsconState, c: bigint): AsconState {
 
 /**
  * 5-bit S-box, bit-sliced across 64 parallel lanes.
- * NIST SP 800-232 Section 3.2.
+ * NIST SP 800-232 Section 3.3.
  */
 export function sbox(state: AsconState): AsconState {
   let [x0, x1, x2, x3, x4] = state;
