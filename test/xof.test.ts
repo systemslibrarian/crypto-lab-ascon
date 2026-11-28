@@ -51,13 +51,16 @@ describe('Ascon-XOF128', () => {
   it('shorter outputs are prefixes of longer outputs (XOF property)', () => {
     const msg = utf8ToBytes('lightweight-crypto');
     const long = asconXof128(msg, 64);
-    for (const len of [0, 1, 7, 8, 9, 16, 32, 63]) {
+    for (const len of [1, 7, 8, 9, 16, 32, 63]) {
       expect(bytesToHex(asconXof128(msg, len))).toBe(bytesToHex(long.subarray(0, len)));
     }
   });
 
   it('rejects invalid output lengths', () => {
-    expect(() => asconXof128(new Uint8Array(0), -1)).toThrow();
+    expect(bytesToHex(asconXof128(new Uint8Array(0), 1))).toBe('47');
+    for (const invalid of [0, -1, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1]) {
+      expect(() => asconXof128(new Uint8Array(0), invalid)).toThrow(/positive safe integer/);
+    }
     expect(() => asconXof128(new Uint8Array(0), 1.5)).toThrow();
   });
 });

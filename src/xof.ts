@@ -14,8 +14,8 @@ const IV_XOF = 0x0000080000cc0003n;
 const RATE_BYTES_XOF = 8;
 
 export function asconXof128(message: Uint8Array, outputBytes: number): Uint8Array {
-  if (!Number.isInteger(outputBytes) || outputBytes < 0) {
-    throw new Error('outputBytes must be a non-negative integer');
+  if (!Number.isSafeInteger(outputBytes) || outputBytes < 1) {
+    throw new Error('outputBytes must be a positive safe integer');
   }
 
   let state: AsconState = [IV_XOF, 0n, 0n, 0n, 0n];
